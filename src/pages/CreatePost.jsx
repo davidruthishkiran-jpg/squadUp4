@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ImagePlus, MapPin } from 'lucide-react'
 import Button from '../components/Button'
-import { currentUser, games } from '../data/mockData'
+import Avatar from '../components/Avatar'
+import { games } from '../data/mockData'
 import { api } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 
@@ -105,9 +106,9 @@ export default function CreatePost() {
           <p className="text-xs font-medium text-[var(--color-fog)] uppercase tracking-wide mb-3">Preview</p>
           <div className="bg-[var(--color-ink-card)] border border-[var(--color-ink-border)] rounded-2xl overflow-hidden">
             <div className="flex items-center gap-3 px-4 py-3">
-              <img src={user?.profilePicture || currentUser.avatar} alt="" className="w-8 h-8 rounded-xl" />
+              <Avatar src={user?.profilePicture} alt="" size="sm" />
               <div>
-                <p className="text-sm font-semibold">{user?.username || currentUser.username}</p>
+                <p className="text-sm font-semibold">{user?.username || 'Your profile'}</p>
                 <p className="text-xs text-[var(--color-fog)]">{game}</p>
               </div>
             </div>
@@ -120,7 +121,7 @@ export default function CreatePost() {
             </div>
             <div className="px-4 py-3">
               <p className="text-sm">
-                <span className="font-semibold mr-1.5">{user?.username || currentUser.username}</span>
+                <span className="font-semibold mr-1.5">{user?.username || 'you'}</span>
                 {caption || 'Your caption will appear here...'}
               </p>
               {tags && (

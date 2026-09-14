@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import PostCard from '../components/PostCard'
-import { posts as mockPosts } from '../data/mockData'
 import { api } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 
@@ -40,7 +39,7 @@ export default function Home() {
   const { token } = useAuth()
 
   useEffect(() => {
-    api('/posts', { token }).then(({ posts }) => setPostList(posts.map(presentPost))).catch((err) => { setError(err.message); setPostList(mockPosts) }).finally(() => setLoading(false))
+    api('/posts', { token }).then(({ posts }) => setPostList(posts.map(presentPost))).catch((err) => { setError(err.message); setPostList([]) }).finally(() => setLoading(false))
   }, [token])
 
   function handleDelete(id) {
@@ -56,7 +55,7 @@ export default function Home() {
         </>
       )}
 
-      {error && <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">Live feed unavailable — showing sample posts. {error}</p>}
+      {error && <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">Live feed unavailable. {error}</p>}
 
       {!loading && postList.length === 0 && (
         <div className="text-center py-20">

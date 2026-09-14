@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Button from '../components/Button'
-import { currentUser, games, platformsList, skillLevels } from '../data/mockData'
+import { games, platformsList, skillLevels } from '../data/mockData'
+import { useAuth } from '../context/AuthContext'
 
 const sections = ['Account', 'Profile', 'Privacy', 'Notifications', 'Appearance']
 
@@ -25,6 +26,7 @@ function Row({ label, children }) {
 }
 
 export default function Settings() {
+  const { user } = useAuth()
   const [active, setActive] = useState('Account')
   const [privacy, setPrivacy] = useState({ privateAccount: false, messagesFromAnyone: true, squadInvitesFromAnyone: true })
   const [notifs, setNotifs] = useState({ likes: true, comments: true, messages: true, squadInvites: true })
@@ -52,8 +54,8 @@ export default function Settings() {
         <div className="bg-[var(--color-ink-card)] border border-[var(--color-ink-border)] rounded-2xl p-5">
           {active === 'Account' && (
             <div className="space-y-4">
-              <Field label="Username" defaultValue={currentUser.username} />
-              <Field label="Email" defaultValue="arjun.r@example.com" type="email" />
+              <Field label="Username" defaultValue={user?.username || ''} />
+              <Field label="Email" defaultValue={user?.email || ''} type="email" />
               <Field label="Password" type="password" placeholder="••••••••" />
               <Button size="sm">Save Changes</Button>
             </div>
@@ -62,10 +64,10 @@ export default function Settings() {
           {active === 'Profile' && (
             <div className="space-y-4">
               <div className="flex items-center gap-4">
-                <img src={currentUser.avatar} alt="" className="w-16 h-16 rounded-2xl" />
+                {user?.profilePicture ? <img src={user.profilePicture} alt="" className="w-16 h-16 rounded-2xl" /> : <div className="w-16 h-16 rounded-2xl bg-[var(--color-ink-raised)] grid place-items-center text-xs text-[var(--color-fog)]">No photo</div>}
                 <Button variant="secondary" size="sm">Change Photo</Button>
               </div>
-              <Field label="Bio" defaultValue={currentUser.bio} textarea />
+              <Field label="Bio" defaultValue={user?.bio || ''} textarea />
               <div>
                 <label className="text-xs font-medium text-[var(--color-fog)]">Games</label>
                 <select className="w-full mt-1.5 bg-[var(--color-ink-raised)] border border-[var(--color-ink-border)] rounded-xl px-3.5 py-2.5 text-sm">

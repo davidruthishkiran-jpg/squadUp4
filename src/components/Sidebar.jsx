@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import { Home, Compass, Users, MessageSquare, Bell, PlusSquare } from 'lucide-react'
 import Logo from './Logo'
 import Avatar from './Avatar'
-import { currentUser } from '../data/mockData'
+import { useAuth } from '../context/AuthContext'
 
 const links = [
   { to: '/home', label: 'Home', icon: Home },
@@ -14,8 +14,9 @@ const links = [
 ]
 
 export default function Sidebar() {
+  const { user } = useAuth()
   return (
-    <aside className="hidden lg:flex flex-col w-64 shrink-0 h-screen sticky top-0 border-r border-[var(--color-ink-border)] px-4 py-6">
+    <aside className="hidden xl:flex flex-col w-64 shrink-0 h-screen sticky top-0 border-r border-[var(--color-ink-border)] px-4 py-6">
       <div className="px-2 mb-8">
         <Logo size="lg" />
       </div>
@@ -45,17 +46,17 @@ export default function Sidebar() {
 
       <div className="mt-auto">
         <NavLink
-          to={`/profile/${currentUser.username}`}
+          to={`/profile/${user?.username || ''}`}
           className={({ isActive }) =>
             `flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
               isActive ? 'bg-[var(--color-ink-card)]' : 'hover:bg-[var(--color-ink-raised)]'
             }`
           }
         >
-          <Avatar src={currentUser.avatar} alt={currentUser.username} status={currentUser.status} size="sm" />
+          <Avatar src={user?.profilePicture} alt={user?.username || 'Your profile'} status={user?.status} size="sm" />
           <div className="min-w-0">
-            <div className="text-sm font-medium truncate">{currentUser.username}</div>
-            <div className="text-xs text-[var(--color-fog)] truncate">{currentUser.gamerStatus}</div>
+            <div className="text-sm font-medium truncate">{user?.username || 'Your profile'}</div>
+            <div className="text-xs text-[var(--color-fog)] truncate">{user?.gamerStatus || 'Set your gamer status'}</div>
           </div>
         </NavLink>
       </div>

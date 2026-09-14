@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import ChatList from '../components/ChatList'
 import ChatWindow from '../components/ChatWindow'
-import { conversations as mockConversations } from '../data/mockData'
 import { api } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 
@@ -11,8 +10,8 @@ function presentMessage(message, currentId) {
 }
 
 export default function Messages() {
-  const [conversations, setConversations] = useState(mockConversations)
-  const [activeId, setActiveId] = useState(mockConversations[0]?.id)
+  const [conversations, setConversations] = useState([])
+  const [activeId, setActiveId] = useState(null)
   const [showChatOnMobile, setShowChatOnMobile] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const [params] = useSearchParams()

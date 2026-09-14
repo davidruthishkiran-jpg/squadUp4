@@ -1,164 +1,48 @@
-import { useState } from 'react'
-import { useParams } from 'react-router-dom'
-import { Mic, MicOff, MapPin, Languages, Gamepad2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import { Gamepad2, MapPin } from 'lucide-react'
 import Avatar from '../components/Avatar'
 import Button from '../components/Button'
-import GameCard from '../components/GameCard'
-import AchievementCard from '../components/AchievementCard'
 import PostCard from '../components/PostCard'
-import { currentUser, gamers, posts, achievements, gameShowcase, squadRequests } from '../data/mockData'
-import SquadCard from '../components/SquadCard'
-
-const tabs = ['Posts', 'Clips', 'Achievements', 'Games', 'Squads']
-
-function findGamer(username) {
-  if (currentUser.username === username) return currentUser
-  return gamers.find((g) => g.username === username)
-}
+import { api } from '../services/api'
+import { useAuth } from '../context/AuthContext'
 
 export default function Profile() {
   const { username } = useParams()
-  const [activeTab, setActiveTab] = useState('Posts')
-  const gamer = findGamer(username)
-  const isSelf = gamer?.username === currentUser.username
+  const { token, user: sessionUser } = useAuth()
+  const [user, setUser] = useState(null)
+  const [posts, setPosts] = useState([])
+  const [error, setError] = useState('')
 
-  if (!gamer) {
-    return (
-      <div className="max-w-2xl mx-auto px-4 py-20 text-center">
-        <p className="font-display font-semibold text-lg">Gamer not found</p>
-      </div>
-    )
-  }
+  useEffect(() => {
+    setError(''); setUser(null)
+    Promise.all([api(`/users/${username}`, { token }), api('/posts', { token })])
+      .then(([profile, feed]) => { setUser(profile.user); setPosts(feed.posts.filter((post) => post.user?.username === profile.user.username)) })
+      .catch((err) => setError(err.message))
+  }, [username, token])
 
-  const userPosts = posts.filter((p) => p.user.username === gamer.username)
-  const userSquads = squadRequests.filter((s) => s.owner.username === gamer.username)
+  if (error) return <div className="max-w-2xl mx-auto px-4 py-20 text-center"><p className="font-display font-semibold text-lg">Gamer not found</p><p className="text-sm text-[var(--color-fog)] mt-1">{error}</p></div>
+  if (!user) return <div className="max-w-2xl mx-auto px-4 py-20 text-center text-sm text-[var(--color-fog)]">Loading profile…</div>
+  const isSelf = user._id === sessionUser?._id
+  const favoriteGames = user.favoriteGames || []
 
-  return (
-    <div className="max-w-3xl mx-auto px-4 lg:px-0 py-6">
+  return <div className="max-w-3xl mx-auto px-4 lg:px-0 py-6">
+    <section className="rounded-2xl border border-[var(--color-ink-border)] bg-[var(--color-ink-card)] p-5 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:items-start gap-5">
-        <Avatar src={gamer.avatar} alt={gamer.username} status={gamer.status || 'online'} size="xl" />
-        <div className="flex-1">
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="font-display font-semibold text-2xl">{gamer.username}</h1>
-            {isSelf ? (
-              <Button variant="secondary" size="sm">Edit Profile</Button>
-            ) : (
-              <>
-                <Button size="sm">Follow</Button>
-                <Button variant="secondary" size="sm">Message</Button>
-                <Button variant="secondary" size="sm">Find Squad</Button>
-              </>
-            )}
-          </div>
-          <p className="text-sm text-[var(--color-fog)] mt-1">{gamer.displayName || gamer.username}</p>
-          {gamer.bio && <p className="text-sm mt-2.5 max-w-md leading-relaxed">{gamer.bio}</p>}
-          {gamer.location && (
-            <p className="text-xs text-[var(--color-fog)] mt-1.5 flex items-center gap-1">
-              <MapPin size={12} /> {gamer.location}
-            </p>
-          )}
-
-          <div className="flex items-center gap-6 mt-4">
-            <Stat label="Posts" value={userPosts.length || 12} />
-            <Stat label="Followers" value={gamer.followers} />
-            <Stat label="Following" value={gamer.following ?? 180} />
-            <Stat label="Squad Rating" value={gamer.squadRating ?? '4.5'} />
-          </div>
+        <Avatar src={user.profilePicture} alt={user.username} status={user.status} size="xl" />
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-3"><h1 className="font-display font-semibold text-2xl">{user.username}</h1>{isSelf ? <Link to="/settings"><Button variant="secondary" size="sm">Edit profile</Button></Link> : <Link to={`/messages?user=${user._id}&username=${encodeURIComponent(user.username)}`}><Button size="sm">Message</Button></Link>}</div>
+          <p className="text-sm text-[var(--color-fog)] mt-1">{user.displayName || user.username}</p>
+          {user.bio && <p className="text-sm mt-3 leading-relaxed">{user.bio}</p>}
+          {user.location && <p className="mt-2 flex items-center gap-1 text-xs text-[var(--color-fog)]"><MapPin size={12} />{user.location}</p>}
+          <div className="grid grid-cols-3 gap-3 mt-5 max-w-sm"><Stat value={posts.length} label="Posts" /><Stat value={user.followerCount || 0} label="Followers" /><Stat value={user.followingCount || 0} label="Following" /></div>
         </div>
       </div>
-
-      {isSelf && (
-        <div className="mt-6 grid sm:grid-cols-2 gap-3">
-          <InfoBlock title="Favorite Games" value={gamer.favoriteGames?.join(', ')} icon={Gamepad2} />
-          <InfoBlock title="Platforms" value={gamer.platforms?.join(', ')} />
-          <InfoBlock title="Skill" value={gamer.skillLevel} />
-          <InfoBlock title="Roles" value={gamer.roles?.join(', ')} />
-          <InfoBlock title="Availability" value={gamer.availability} />
-          <InfoBlock
-            title="Mic"
-            value={gamer.mic ? 'Available' : 'Not available'}
-            icon={gamer.mic ? Mic : MicOff}
-          />
-          <InfoBlock title="Languages" value={gamer.languages?.join(', ')} icon={Languages} className="sm:col-span-2" />
-        </div>
-      )}
-
-      <div className="flex items-center gap-1 mt-8 border-b border-[var(--color-ink-border)] overflow-x-auto scrollbar-none">
-        {tabs.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
-              activeTab === tab
-                ? 'border-[var(--color-ember)] text-[#EDEFF5]'
-                : 'border-transparent text-[var(--color-fog)] hover:text-[#EDEFF5]'
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      <div className="mt-6">
-        {activeTab === 'Posts' && (
-          userPosts.length ? (
-            <div className="space-y-5 max-w-xl">
-              {userPosts.map((p) => <PostCard key={p.id} post={p} />)}
-            </div>
-          ) : <EmptyState text="No posts yet" />
-        )}
-
-        {activeTab === 'Clips' && <EmptyState text="No clips uploaded yet" />}
-
-        {activeTab === 'Achievements' && (
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-            {achievements.map((a) => <AchievementCard key={a.id} achievement={a} />)}
-          </div>
-        )}
-
-        {activeTab === 'Games' && (
-          <div className="grid sm:grid-cols-2 gap-3">
-            {gameShowcase.map((g) => <GameCard key={g.id} game={g} />)}
-          </div>
-        )}
-
-        {activeTab === 'Squads' && (
-          userSquads.length ? (
-            <div className="space-y-4">
-              {userSquads.map((s) => <SquadCard key={s.id} squad={s} />)}
-            </div>
-          ) : <EmptyState text="Not part of any squads yet" />
-        )}
-      </div>
-    </div>
-  )
+      <div className="mt-5 flex flex-wrap gap-2">{favoriteGames.map((game) => <span key={game} className="rounded-lg border border-[var(--color-ink-border)] bg-[var(--color-ink-raised)] px-2.5 py-1 text-xs"><Gamepad2 size={12} className="mr-1 inline" />{game}</span>)}</div>
+    </section>
+    <section className="mt-7"><h2 className="font-display font-semibold text-lg">Posts</h2>{posts.length ? <div className="mt-4 space-y-5 max-w-xl">{posts.map((post) => <PostCard key={post._id} post={{ ...post, id: post._id, image: post.image, likes: post.likes?.length || 0, comments: post.comments?.length || 0, tags: post.tags || [], timestamp: new Date(post.createdAt).toLocaleDateString(), user: { ...post.user, id: post.user?._id, avatar: post.user?.profilePicture } }} />)}</div> : <Empty text={isSelf ? 'Your posts will appear here after you share your first gaming moment.' : 'No posts yet.'} />}</section>
+  </div>
 }
 
-function Stat({ label, value }) {
-  return (
-    <div className="text-center sm:text-left">
-      <div className="font-display font-semibold text-lg leading-none">{value}</div>
-      <div className="text-xs text-[var(--color-fog)] mt-1">{label}</div>
-    </div>
-  )
-}
-
-function InfoBlock({ title, value, icon: Icon, className = '' }) {
-  if (!value) return null
-  return (
-    <div className={`bg-[var(--color-ink-card)] border border-[var(--color-ink-border)] rounded-xl p-3.5 ${className}`}>
-      <p className="text-[11px] text-[var(--color-fog)] uppercase tracking-wide flex items-center gap-1.5">
-        {Icon && <Icon size={11} />} {title}
-      </p>
-      <p className="text-sm mt-1">{value}</p>
-    </div>
-  )
-}
-
-function EmptyState({ text }) {
-  return (
-    <div className="text-center py-16">
-      <p className="text-sm text-[var(--color-fog)]">{text}</p>
-    </div>
-  )
-}
+function Stat({ value, label }) { return <div><p className="font-display text-lg font-semibold">{value}</p><p className="text-xs text-[var(--color-fog)]">{label}</p></div> }
+function Empty({ text }) { return <div className="mt-4 rounded-2xl border border-dashed border-[var(--color-ink-border)] py-14 text-center text-sm text-[var(--color-fog)]">{text}</div> }

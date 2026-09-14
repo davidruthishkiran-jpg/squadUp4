@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Heart, MessageCircle, Share2, Bookmark, Gamepad2, MoreHorizontal, Trash2 } from 'lucide-react'
 import Avatar from './Avatar'
-import { currentUser } from '../data/mockData'
 import { api } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 
@@ -13,7 +12,7 @@ export default function PostCard({ post, onDelete }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [actionError, setActionError] = useState('')
   const { token, user } = useAuth()
-  const isOwner = post.user.id === (user?._id || user?.id || currentUser.id)
+  const isOwner = post.user.id === (user?._id || user?.id)
 
   async function toggleLike() {
     const previousLiked = liked

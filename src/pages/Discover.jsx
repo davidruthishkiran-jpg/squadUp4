@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { SlidersHorizontal, X } from 'lucide-react'
 import GamerCard from '../components/GamerCard'
 import Button from '../components/Button'
-import { gamers, games, platformsList, skillLevels, rolesList, availabilityList } from '../data/mockData'
+import { games, platformsList, skillLevels, rolesList, availabilityList } from '../data/mockData'
 import { api } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 
@@ -17,14 +17,15 @@ const filterGroups = [
 export default function Discover() {
   const [filters, setFilters] = useState({})
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
-  const [gamerList, setGamerList] = useState(gamers)
+  const [gamerList, setGamerList] = useState([])
+  const [loadError, setLoadError] = useState('')
   const { token } = useAuth()
 
   useEffect(() => {
     api('/users/discover', { token }).then(({ users }) => setGamerList(users.map((user) => ({
       ...user, id: user._id, avatar: user.profilePicture,
       game: user.favoriteGames?.[0] || 'Gaming', platform: user.platforms?.[0] || 'Any', role: user.roles?.[0] || 'Any',
-    })))).catch(() => {})
+    })))).catch((error) => { setGamerList([]); setLoadError(error.message) })
   }, [token])
 
   function toggleFilter(group, value) {
@@ -103,7 +104,12 @@ export default function Discover() {
         )}
 
         <div>
-          {filtered.length === 0 ? (
+          {loadError ? (
+            <div className="text-center py-20">
+              <p className="font-display font-semibold text-lg">Couldn’t load gamers</p>
+              <p className="text-sm text-red-300 mt-1">{loadError}</p>
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="text-center py-20">
               <p className="font-display font-semibold text-lg">No gamers match those filters</p>
               <p className="text-sm text-[var(--color-fog)] mt-1">Try clearing a filter or two.</p>
