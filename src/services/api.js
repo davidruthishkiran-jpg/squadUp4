@@ -5,7 +5,9 @@ export async function api(path, { token, ...options } = {}) {
     headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...options.headers },
     ...options,
   })
-  const data = response.status === 204 ? null : await response.json().catch(() => ({}))
-  if (!response.ok) throw new Error(data.message || 'Request failed. Please try again.')
+  const data = response.status === 204 ? null : await response.json().catch(() => null)
+  if (!response.ok) {
+    throw new Error(data?.message || 'The server API is unavailable. Check the Vercel deployment and environment variables.')
+  }
   return data
 }
