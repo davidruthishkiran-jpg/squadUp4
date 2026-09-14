@@ -1,13 +1,20 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import NotificationItem from '../components/NotificationItem'
 import Button from '../components/Button'
-import { notifications as mockNotifications } from '../data/mockData'
+import { api } from '../services/api'
+import { useAuth } from '../context/AuthContext'
 
 export default function Notifications() {
-  const [notifications, setNotifications] = useState(mockNotifications)
+  const [notifications, setNotifications] = useState([])
+  const { token } = useAuth()
+
+  useEffect(() => {
+    api('/notifications', { token }).then(({ notifications: items }) => setNotifications(items.map((item) => ({ ...item, id: item._id, user: { ...item.sender, id: item.sender?._id, avatar: item.sender?.profilePicture }, text: item.type.replace('_', ' '), time: new Date(item.createdAt).toLocaleDateString() })))).catch(() => {})
+  }, [token])
 
   function markRead(id) {
     setNotifications((ns) => ns.map((n) => (n.id === id ? { ...n, read: true } : n)))
+    api(`/notifications/${id}/read`, { token, method: 'PUT' }).catch(() => {})
   }
 
   function markAllRead() {

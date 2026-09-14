@@ -14,18 +14,19 @@ export default function Messages() {
   const [conversations, setConversations] = useState(mockConversations)
   const [activeId, setActiveId] = useState(mockConversations[0]?.id)
   const [showChatOnMobile, setShowChatOnMobile] = useState(false)
+  const [loaded, setLoaded] = useState(false)
   const [params] = useSearchParams()
   const { token, user } = useAuth()
 
   useEffect(() => {
     api('/messages/conversations', { token }).then(({ conversations: latest }) => {
-      if (!latest.length) return
+      if (!latest.length) { setConversations([]); return }
       const items = latest.map((message) => {
         const other = message.sender._id === user._id ? message.receiver : message.sender
         return { id: message.conversation, receiverId: other._id, user: { ...other, id: other._id, avatar: other.profilePicture }, lastMessage: message.text, timestamp: new Date(message.createdAt).toLocaleDateString(), unread: 0, messages: [] }
       })
       setConversations(items); setActiveId(items[0].id)
-    }).catch(() => {})
+    }).catch(() => {}).finally(() => setLoaded(true))
   }, [token, user?._id])
 
   useEffect(() => {
@@ -71,7 +72,7 @@ export default function Messages() {
           <div className="px-4 py-4 border-b border-[var(--color-ink-border)]">
             <h1 className="font-display font-semibold text-lg">Messages</h1>
           </div>
-          <ChatList conversations={conversations} activeId={activeId} onSelect={handleSelect} />
+          {loaded && conversations.length === 0 ? <p className="px-4 py-8 text-center text-sm text-[var(--color-fog)]">No messages yet. Find a gamer to start chatting.</p> : <ChatList conversations={conversations} activeId={activeId} onSelect={handleSelect} />}
         </div>
         <div className={`flex-1 flex ${showChatOnMobile ? 'flex' : 'hidden lg:flex'}`}>
           <ChatWindow conversation={active} onSend={handleSend} />
