@@ -7,6 +7,7 @@ import squadRoutes from './routes/squads.js'
 import messageRoutes from './routes/messages.js'
 import communityRoutes from './routes/communities.js'
 import notificationRoutes from './routes/notifications.js'
+import adminRoutes from './routes/admin.js'
 
 const app = express()
 const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173').split(',').map((origin) => origin.trim())
@@ -20,6 +21,7 @@ app.use('/api/squads', squadRoutes)
 app.use('/api/messages', messageRoutes)
 app.use('/api/communities', communityRoutes)
 app.use('/api/notifications', notificationRoutes)
+app.use('/api/admin', adminRoutes)
 app.use((_, res) => res.status(404).json({ message: 'Route not found.' }))
 app.use((error, _, res, __) => { console.error(error); res.status(error.name === 'ValidationError' ? 400 : 500).json({ message: error.name === 'ValidationError' ? error.message : 'Something went wrong.' }) })
 export default app
