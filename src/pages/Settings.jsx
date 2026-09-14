@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Button from '../components/Button'
 import { games, platformsList, skillLevels } from '../data/mockData'
 import { useAuth } from '../context/AuthContext'
+import { api } from '../services/api'
 
 const sections = ['Account', 'Profile', 'Privacy', 'Notifications', 'Appearance']
 
@@ -26,11 +27,26 @@ function Row({ label, children }) {
 }
 
 export default function Settings() {
-  const { user } = useAuth()
+  const { user, token, updateUser } = useAuth()
   const [active, setActive] = useState('Account')
   const [privacy, setPrivacy] = useState({ privateAccount: false, messagesFromAnyone: true, squadInvitesFromAnyone: true })
   const [notifs, setNotifs] = useState({ likes: true, comments: true, messages: true, squadInvites: true })
   const [darkMode, setDarkMode] = useState(true)
+  const [photoError, setPhotoError] = useState('')
+  const [uploading, setUploading] = useState(false)
+
+  async function uploadPhoto(event) {
+    const file = event.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) return setPhotoError('Please choose an image file.')
+    if (file.size > 1200000) return setPhotoError('Choose an image smaller than 1.2 MB.')
+    setPhotoError(''); setUploading(true)
+    const reader = new FileReader()
+    reader.onload = async () => {
+      try { const { user: updated } = await api('/users/profile', { token, method: 'PUT', body: JSON.stringify({ profilePicture: reader.result }) }); updateUser(updated) } catch (error) { setPhotoError(error.message) } finally { setUploading(false) }
+    }
+    reader.readAsDataURL(file)
+  }
 
   return (
     <div className="max-w-3xl mx-auto px-4 lg:px-0 py-6">
@@ -65,8 +81,9 @@ export default function Settings() {
             <div className="space-y-4">
               <div className="flex items-center gap-4">
                 {user?.profilePicture ? <img src={user.profilePicture} alt="" className="w-16 h-16 rounded-2xl" /> : <div className="w-16 h-16 rounded-2xl bg-[var(--color-ink-raised)] grid place-items-center text-xs text-[var(--color-fog)]">No photo</div>}
-                <Button variant="secondary" size="sm">Change Photo</Button>
+                <label className="cursor-pointer"><Button variant="secondary" size="sm" type="button" disabled={uploading}>{uploading ? 'Uploading…' : 'Upload photo'}</Button><input type="file" accept="image/*" className="hidden" onChange={uploadPhoto} /></label>
               </div>
+              {photoError && <p className="text-xs text-red-300">{photoError}</p>}
               <Field label="Bio" defaultValue={user?.bio || ''} textarea />
               <div>
                 <label className="text-xs font-medium text-[var(--color-fog)]">Games</label>

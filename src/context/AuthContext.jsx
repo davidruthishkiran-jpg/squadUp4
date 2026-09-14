@@ -35,8 +35,10 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('squadup_token'); setToken(null); setUser(null)
   }
 
+  function updateUser(nextUser) { setUser(nextUser) }
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, loading, user, token, login, register, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, loading, user, token, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   )
